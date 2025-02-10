@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joc de Memòria</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .memory-game {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .card.flipped {
+            background-color: #fff;
+            border: 2px solid #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="memory-game" id="memory-game"></div>
+
+    <script>
+        const cardsData = [
+            { id: 1, content: "Interpretació dels drets fonamentals" },
+            { id: 2, content: "Alineació de la normativa espanyola" },
+            { id: 3, content: "Competència exclusiva sobre el procediment administratiu" },
+            { id: 4, content: "Un ajuntament català pot ajustar el procediment" },
+            { id: 5, content: "Funcions representatives del rei" },
+            { id: 6, content: "Quan el Parlament aprova una nova llei" },
+            { id: 7, content: "Independència del poder judicial" },
+            { id: 8, content: "El jutge ha de resoldre sense interferències" },
+            { id: 9, content: "Prohibició de mesures provisionals" },
+            { id: 10, content: "Impossibilitat de suspendre activitats econòmiques" },
+            { id: 11, content: "Promulgació formal de lleis" },
+            { id: 12, content: "Resolució de casos sense interferències" },
+            { id: 13, content: "Potestat tributària originària de l'Estat" },
+            { id: 14, content: "Regulació de l'IBI per ajuntaments" },
+            { id: 15, content: "Objectivitat de l'Administració Pública" },
+            { id: 16, content: "Actuació imparcial dels funcionaris" },
+            { id: 17, content: "Incompatibilitats dels funcionaris" },
+            { id: 18, content: "Prohibició de participar en contractes públics" },
+            { id: 19, content: "Principi d'igualtat davant la llei" },
+            { id: 20, content: "Criteris objectius en la concessió de subvencions" },
+            { id: 21, content: "Dret d'accés a la informació pública" },
+            { id: 22, content: "Sol·licitud d'informació sobre pressupost municipal" }
+        ];
+
+        const cards = [...cardsData, ...cardsData];
+        cards.sort(() => 0.5 - Math.random());
+
+        const memoryGame = document.getElementById('memory-game');
+        let flippedCards = [];
+
+        cards.forEach((card, index) => {
+            const cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+            cardElement.dataset.id = card.id;
+            cardElement.addEventListener('click', () => flipCard(cardElement));
+            memoryGame.appendChild(cardElement);
+        });
+
+        function flipCard(card) {
+            if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
+                card.classList.add('flipped');
+                card.textContent = cardsData.find(c => c.id == card.dataset.id).content;
+                flippedCards.push(card);
+
+                if (flippedCards.length === 2) {
+                    setTimeout(checkForMatch, 500);
+                }
+            }
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.id === card2.dataset.id) {
+                card1.removeEventListener('click', () => flipCard(card1));
+                card2.removeEventListener('click', () => flipCard(card2));
+                flippedCards = [];
+            } else {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                card1.textContent = '';
+                card2.textContent = '';
+                flippedCards = [];
+            }
+        }
+    </script>
+</body>
+</html>
