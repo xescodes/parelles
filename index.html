@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Articles topofthetop CE</title>
+    <title>Articles destacats CE</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,6 +74,8 @@
             justify-content: center;
             background-color: #333;
             color: white;
+            font-size: 14px;
+            text-align: center;
         }
         .back {
             position: absolute;
@@ -88,6 +90,8 @@
             color: #00ff00;
             transform: rotateY(180deg);
             backface-visibility: hidden;
+            font-size: 14px;
+            text-align: center;
         }
         .card.flipped .front {
             transform: rotateY(180deg);
@@ -110,6 +114,7 @@
             padding: 8px;
             text-align: left;
             color: #00ff00;
+            font-size: 14px;
         }
         .disintegrate {
             animation: disintegrate 1.2s ease-in-out forwards;
@@ -173,6 +178,9 @@
                 width: 100px;
                 height: 100px;
             }
+            .matched-cards-table {
+                max-width: 400px;
+            }
         }
         @media (max-width: 480px) {
             .game-board {
@@ -183,7 +191,7 @@
                 height: 100px;
             }
             .matched-cards-table {
-                max-width: 400px;
+                max-width: 300px;
             }
         }
         @media (max-width: 320px) {
@@ -204,7 +212,7 @@
     </style>
 </head>
 <body>
-    <h1>Articles topofthetop CE</h1>
+    <h1>Articles destacats CE</h1>
     <div class="game-board" id="gameBoard"></div>
     <h2>Parells Trobats</h2>
     <table class="matched-cards-table" id="matchedCardsTable">
@@ -295,7 +303,7 @@
                 <div class="back">${data.content}</div>
             `;
             card.addEventListener('click', () => handleCardClick(card));
-            return card;
+            return card; // Asegurar que la funció retorni la carta creada
         };
 
         const shuffleArray = (array) => {
@@ -318,11 +326,14 @@
         const handleCardClick = (card) => {
             if (flippedCards.length === 2 || card.classList.contains('matched')) return;
 
-            card.classList.toggle('flipped');
-
-            if (!card.classList.contains('flipped')) {
+            if (flippedCards.length === 1 && card === flippedCards[0]) {
+                // Si es clica la mateixa carta una segona vegada, la girarà enrere
+                card.classList.remove('flipped');
+                flippedCards = [];
                 return;
             }
+
+            card.classList.add('flipped');
 
             flippedCards.push(card);
 
@@ -390,6 +401,7 @@
             matchedCardsTableBody.appendChild(row);
         };
 
+        // Inicialitzar el joc
         initializeGame();
     </script>
 </body>
