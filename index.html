@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joc de Memory</title>
+    <title>Articles topofthetop CE</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             background: linear-gradient(45deg, #333, #555, #333);
             background-size: 400% 400%;
-            animation: metalShine 10s ease infinite;
+            animation: metalShine 15s ease-in-out infinite; /* Animació més suau */
             margin: 0;
             padding: 0;
             color: #fff;
@@ -47,10 +47,11 @@
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 10px #00ff00;
             filter: drop-shadow(0 0 5px #00ff00);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+            transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out, filter 0.4s ease-in-out;
+            animation: float-multi 6s ease-in-out infinite; /* Flotació més suau */
         }
         .card:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) translateY(-5px); /* Ampliació lleugera i elevació al passar el ratolí */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 20px #00ff00;
             filter: drop-shadow(0 0 10px #00ff00);
         }
@@ -111,7 +112,7 @@
             color: #00ff00;
         }
         .disintegrate {
-            animation: disintegrate 1s forwards;
+            animation: disintegrate 1.2s ease-in-out forwards;
         }
         @keyframes disintegrate {
             0% {
@@ -120,17 +121,53 @@
             }
             50% {
                 opacity: 0.5;
-                transform: scale(0.8);
+                transform: scale(0.95); /* Moviment quasi imperceptible */
             }
             100% {
                 opacity: 0;
                 transform: scale(0);
             }
         }
+        /* Animació multidireccional */
+        @keyframes float-multi {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-2px) translateX(1px) rotate(0.2deg); /* Moviments quasi imperceptibles */
+            }
+            50% {
+                transform: translateY(1px) translateX(-1px) rotate(-0.2deg);
+            }
+            75% {
+                transform: translateY(-1px) translateX(1px) rotate(0.1deg);
+            }
+        }
+        /* Efecte de deriva incremental */
+        .drift {
+            animation: drift-effect 1.5s ease-in-out;
+        }
+        @keyframes drift-effect {
+            0% {
+                transform: translateY(0px) translateX(0px);
+            }
+            25% {
+                transform: translateY(-1px) translateX(0.5px); /* Moviments quasi imperceptibles */
+            }
+            50% {
+                transform: translateY(0.5px) translateX(-0.5px);
+            }
+            75% {
+                transform: translateY(-0.5px) translateX(0.25px);
+            }
+            100% {
+                transform: translateY(0px) translateX(0px);
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Joc de Memory</h1>
+    <h1>Articles topofthetop CE</h1>
     <div class="game-board" id="gameBoard"></div>
     <h2>Parells Trobats</h2>
     <table class="matched-cards-table" id="matchedCardsTable">
@@ -163,8 +200,10 @@
         let flippedCards = [];
         let matches = 0;
 
+        // Crear un únic AudioContext global
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+        // Sò de desintegració semblant a una gota
         const playMatchSound = () => {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -181,6 +220,33 @@
 
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.3);
+        };
+
+        // Sò de victòria (marxa triomfal)
+        const playVictoryJingle = () => {
+            const notes = [261.63, 293.66, 329.63, 349.23, 392.00]; // Notes C4, D4, E4, F4, G4
+            const duration = 0.2; // Durada de cada nota (en segons)
+
+            let time = audioContext.currentTime;
+
+            notes.forEach((frequency, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.type = 'square'; // Estil "jingle" retro
+                oscillator.frequency.setValueAtTime(frequency, time);
+
+                gainNode.gain.setValueAtTime(1, time);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start(time);
+                oscillator.stop(time + duration);
+
+                time += duration;
+            });
         };
 
         const createCard = (data) => {
@@ -228,6 +294,17 @@
             }
         };
 
+        const triggerDrift = (card) => {
+            const siblings = Array.from(gameBoard.children).filter(
+                sibling => sibling !== card && !sibling.classList.contains('matched')
+            );
+
+            siblings.forEach(sibling => {
+                sibling.classList.add('drift');
+                setTimeout(() => sibling.classList.remove('drift'), 1500); // Durada curta
+            });
+        };
+
         const checkForMatch = () => {
             const [firstCard, secondCard] = flippedCards;
 
@@ -244,17 +321,22 @@
                         flippedCards = [];
                         matches++;
 
+                        // Trigger drift effect on nearby cards
+                        triggerDrift(firstCard);
+                        triggerDrift(secondCard);
+
                         if (matches === cardsData.length) {
+                            playVictoryJingle(); // Reproduir el jingle de victòria
                             alert("Has guanyat el joc!");
                         }
-                    }, 1000);
-                }, 1000);
+                    }, 1000); // Temps més curt
+                }, 1000); // Temps més curt
             } else {
                 setTimeout(() => {
                     firstCard.classList.remove('flipped');
                     secondCard.classList.remove('flipped');
                     flippedCards = [];
-                }, 1000);
+                }, 1000); // Temps més curt
             }
         };
 
