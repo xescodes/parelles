@@ -90,10 +90,27 @@
             padding: 8px;
             text-align: left;
         }
+        .disintegrate {
+            animation: disintegrate 1s forwards;
+        }
+        @keyframes disintegrate {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Memory Principals Articles Constitució Espanyola</h1>
+    <h1>Joc de Memory</h1>
     <div class="game-board" id="gameBoard"></div>
     <h2>Parells Trobats</h2>
     <table class="matched-cards-table" id="matchedCardsTable">
@@ -125,6 +142,28 @@
         const matchedCardsTableBody = document.querySelector('#matchedCardsTable tbody');
         let flippedCards = [];
         let matches = 0;
+
+        // Crear un únic AudioContext global
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Sò de desintegració semblant a una gota
+        const playMatchSound = () => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'triangle'; // Tipus d'ona semblant a una gota
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Comença a 800 Hz
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3); // Baixa fins a 200 Hz
+
+            gainNode.gain.setValueAtTime(1, audioContext.currentTime); // Volum inicial al màxim
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3); // Disminueix el volum
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3); // Dura 0.3 segons
+        };
 
         const createCard = (data) => {
             const card = document.createElement('div');
@@ -176,15 +215,21 @@
 
             if (firstCard.dataset.article === secondCard.dataset.article) {
                 setTimeout(() => {
-                    firstCard.classList.add('matched');
-                    secondCard.classList.add('matched');
-                    addMatchedPairToTable(firstCard.dataset.article);
-                    flippedCards = [];
-                    matches++;
+                    firstCard.classList.add('disintegrate');
+                    secondCard.classList.add('disintegrate');
+                    playMatchSound(); // Reproduir so de gota
 
-                    if (matches === cardsData.length) {
-                        alert("Has guanyat el joc!");
-                    }
+                    setTimeout(() => {
+                        firstCard.classList.add('matched');
+                        secondCard.classList.add('matched');
+                        addMatchedPairToTable(firstCard.dataset.article);
+                        flippedCards = [];
+                        matches++;
+
+                        if (matches === cardsData.length) {
+                            alert("Has guanyat el joc!");
+                        }
+                    }, 1000);
                 }, 1000);
             } else {
                 setTimeout(() => {
