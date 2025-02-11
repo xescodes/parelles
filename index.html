@@ -1,1 +1,277 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joc de Memory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(45deg, #333, #555, #333);
+            background-size: 400% 400%;
+            animation: metalShine 10s ease infinite;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+        }
+        @keyframes metalShine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        h1 {
+            margin-top: 20px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 100px);
+            grid-gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #333;
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 10px #00ff00;
+            filter: drop-shadow(0 0 5px #00ff00);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 20px #00ff00;
+            filter: drop-shadow(0 0 10px #00ff00);
+        }
+        .card.flipped {
+            background-color: #002200;
+            color: #00ff00;
+        }
+        .card.matched {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .front {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #333;
+            color: white;
+        }
+        .back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #002200;
+            color: #00ff00;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+        }
+        .card.flipped .front {
+            transform: rotateY(180deg);
+        }
+        .card.flipped .back {
+            transform: rotateY(0);
+        }
+        .matched-cards-table {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .matched-cards-table th, .matched-cards-table td {
+            border: 1px solid #00ff00;
+            padding: 8px;
+            text-align: left;
+            color: #00ff00;
+        }
+        .disintegrate {
+            animation: disintegrate 1s forwards;
+        }
+        @keyframes disintegrate {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Joc de Memory</h1>
+    <div class="game-board" id="gameBoard"></div>
+    <h2>Parells Trobats</h2>
+    <table class="matched-cards-table" id="matchedCardsTable">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>Contingut</th>
+                <th>Exemple</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
+    <script>
+        const cardsData = [
+            { article: "7", content: "Incompatibilitats dels funcionaris", example: "Prohibició de participar en contractes públics amb vincles familiars" },
+            { article: "10.2", content: "Interpretació dels drets fonamentals", example: "Alineació de la normativa espanyola amb compromisos internacionals" },
+            { article: "14", content: "Principi d’igualtat davant la llei", example: "Criteris objectius per evitar discriminacions injustificades" },
+            { article: "56", content: "Funcions representatives del Rei", example: "Promulgació de lleis" },
+            { article: "56.4", content: "Prohibició de mesures provisionals", example: "Impossibilitat de suspendre activitats sense garantir el dret a la defensa prèvia" },
+            { article: "103", content: "Objectivitat de l’Administració Pública", example: "Actuació imparcial dels funcionaris" },
+            { article: "105.b", content: "Accés a la informació pública", example: "Solicitud informació sobre pressupost municipal" },
+            { article: "117", content: "Poder judicial a Espanya", example: "Independència judicial i unitat jurisdiccional" },
+            { article: "133", content: "Potestat tributària originària", example: "Regulació de l'IBI per ajuntaments" },
+            { article: "149.1.18", content: "Competència exclusiva sobre procediment administratiu", example: "Adaptació segons necessitats específiques" }
+        ];
+
+        const gameBoard = document.getElementById('gameBoard');
+        const matchedCardsTableBody = document.querySelector('#matchedCardsTable tbody');
+        let flippedCards = [];
+        let matches = 0;
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        const playMatchSound = () => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+
+            gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        };
+
+        const createCard = (data) => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.article = data.article;
+            card.innerHTML = `
+                <div class="front">Article ${data.article}</div>
+                <div class="back">${data.content}</div>
+            `;
+            card.addEventListener('click', () => handleCardClick(card));
+            return card;
+        };
+
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        };
+
+        const initializeGame = () => {
+            const duplicatedCardsData = [...cardsData, ...cardsData];
+            shuffleArray(duplicatedCardsData);
+
+            duplicatedCardsData.forEach(data => {
+                const card = createCard(data);
+                gameBoard.appendChild(card);
+            });
+        };
+
+        const handleCardClick = (card) => {
+            if (flippedCards.length === 2 || card.classList.contains('matched')) return;
+
+            card.classList.toggle('flipped');
+
+            if (!card.classList.contains('flipped')) {
+                return;
+            }
+
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        };
+
+        const checkForMatch = () => {
+            const [firstCard, secondCard] = flippedCards;
+
+            if (firstCard.dataset.article === secondCard.dataset.article) {
+                setTimeout(() => {
+                    firstCard.classList.add('disintegrate');
+                    secondCard.classList.add('disintegrate');
+                    playMatchSound();
+
+                    setTimeout(() => {
+                        firstCard.classList.add('matched');
+                        secondCard.classList.add('matched');
+                        addMatchedPairToTable(firstCard.dataset.article);
+                        flippedCards = [];
+                        matches++;
+
+                        if (matches === cardsData.length) {
+                            alert("Has guanyat el joc!");
+                        }
+                    }, 1000);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    flippedCards = [];
+                }, 1000);
+            }
+        };
+
+        const addMatchedPairToTable = (article) => {
+            const matchedCardData = cardsData.find(card => card.article === article);
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${matchedCardData.article}</td>
+                <td>${matchedCardData.content}</td>
+                <td>${matchedCardData.example}</td>
+            `;
+
+            matchedCardsTableBody.appendChild(row);
+        };
+
+        initializeGame();
+    </script>
+</body>
+</html>
