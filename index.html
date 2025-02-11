@@ -8,12 +8,22 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
+            background: linear-gradient(45deg, #333, #555, #333);
+            background-size: 400% 400%;
+            animation: metalShine 10s ease infinite;
             margin: 0;
             padding: 0;
+            color: #fff;
+        }
+        @keyframes metalShine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         h1 {
             margin-top: 20px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
         }
         .game-board {
             display: grid;
@@ -35,18 +45,22 @@
             font-size: 14px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 10px #00ff00;
+            filter: drop-shadow(0 0 5px #00ff00);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 20px #00ff00;
+            filter: drop-shadow(0 0 10px #00ff00);
         }
         .card.flipped {
-            background-color: #fff;
-            color: #333;
+            background-color: #002200;
+            color: #00ff00;
         }
         .card.matched {
-            background-color: #8bc34a;
-            pointer-events: none;
-        }
-        .card.hidden {
             visibility: hidden;
+            pointer-events: none;
         }
         .front {
             position: absolute;
@@ -69,8 +83,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #fff;
-            color: #333;
+            background-color: #002200;
+            color: #00ff00;
             transform: rotateY(180deg);
             backface-visibility: hidden;
         }
@@ -80,11 +94,55 @@
         .card.flipped .back {
             transform: rotateY(0);
         }
+        .matched-cards-table {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .matched-cards-table th, .matched-cards-table td {
+            border: 1px solid #00ff00;
+            padding: 8px;
+            text-align: left;
+            color: #00ff00;
+        }
+        .disintegrate {
+            animation: disintegrate 1s forwards;
+        }
+        @keyframes disintegrate {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Memory principals articles CE</h1>
+    <h1>Joc de Memory</h1>
     <div class="game-board" id="gameBoard"></div>
+    <h2>Parells Trobats</h2>
+    <table class="matched-cards-table" id="matchedCardsTable">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>Contingut</th>
+                <th>Exemple</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
     <script>
         const cardsData = [
@@ -101,8 +159,29 @@
         ];
 
         const gameBoard = document.getElementById('gameBoard');
+        const matchedCardsTableBody = document.querySelector('#matchedCardsTable tbody');
         let flippedCards = [];
         let matches = 0;
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        const playMatchSound = () => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+
+            gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        };
 
         const createCard = (data) => {
             const card = document.createElement('div');
@@ -136,7 +215,11 @@
         const handleCardClick = (card) => {
             if (flippedCards.length === 2 || card.classList.contains('matched')) return;
 
-            card.classList.add('flipped');
+            card.classList.toggle('flipped');
+
+            if (!card.classList.contains('flipped')) {
+                return;
+            }
 
             flippedCards.push(card);
 
@@ -150,14 +233,21 @@
 
             if (firstCard.dataset.article === secondCard.dataset.article) {
                 setTimeout(() => {
-                    firstCard.classList.add('matched');
-                    secondCard.classList.add('matched');
-                    flippedCards = [];
-                    matches++;
+                    firstCard.classList.add('disintegrate');
+                    secondCard.classList.add('disintegrate');
+                    playMatchSound();
 
-                    if (matches === cardsData.length) {
-                        alert("Has guanyat el joc!");
-                    }
+                    setTimeout(() => {
+                        firstCard.classList.add('matched');
+                        secondCard.classList.add('matched');
+                        addMatchedPairToTable(firstCard.dataset.article);
+                        flippedCards = [];
+                        matches++;
+
+                        if (matches === cardsData.length) {
+                            alert("Has guanyat el joc!");
+                        }
+                    }, 1000);
                 }, 1000);
             } else {
                 setTimeout(() => {
@@ -166,6 +256,19 @@
                     flippedCards = [];
                 }, 1000);
             }
+        };
+
+        const addMatchedPairToTable = (article) => {
+            const matchedCardData = cardsData.find(card => card.article === article);
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${matchedCardData.article}</td>
+                <td>${matchedCardData.content}</td>
+                <td>${matchedCardData.example}</td>
+            `;
+
+            matchedCardsTableBody.appendChild(row);
         };
 
         initializeGame();
