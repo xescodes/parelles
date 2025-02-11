@@ -164,12 +164,49 @@
                 transform: translateY(0px) translateX(0px);
             }
         }
+        /* Responsivitat */
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(4, 100px);
+            }
+            .card {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        @media (max-width: 480px) {
+            .game-board {
+                grid-template-columns: repeat(3, 100px);
+            }
+            .card {
+                width: 100px;
+                height: 100px;
+            }
+            .matched-cards-table {
+                max-width: 400px;
+            }
+        }
+        @media (max-width: 320px) {
+            .game-board {
+                grid-template-columns: repeat(2, 100px);
+            }
+            .card {
+                width: 100px;
+                height: 100px;
+            }
+            .matched-cards-table {
+                max-width: 300px;
+            }
+            .matched-cards-table th, .matched-cards-table td {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Articles topofthetop CE</h1>
     <div class="game-board" id="gameBoard"></div>
-    <h2>Parelles Trobades</h2>
+    <h2>Parells Trobats</h2>
     <table class="matched-cards-table" id="matchedCardsTable">
         <thead>
             <tr>
